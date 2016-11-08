@@ -540,3 +540,32 @@ func matchMapWithRegex(toCheck map[string]*regexp.Regexp, toMatch map[string][]s
 	}
 	return true
 }
+
+func (r *Router) matchWithoutMethod(req *http.Request) []*Route {
+	results := []*Route{}
+	for _, route := range r.routes {
+		if route.matchWithoutMethod(req) {
+			results = append(results, route)
+		}
+	}
+	return results
+}
+
+func (r *Router) GetMethods(req *http.Request) []string {
+	routes := r.matchWithoutMethod(req)
+	m := map[string]struct{}{}
+	for _, route := range routes {
+		if route == nil {
+			continue
+		}
+		methods := route.GetMethods()
+		for _, method := range methods {
+			m[method] = struct{}{}
+		}
+	}
+	methods := []string{}
+	for method, _ := range m {
+		methods = append(methods, method)
+	}
+	return methods
+}

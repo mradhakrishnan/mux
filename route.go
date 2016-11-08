@@ -634,3 +634,36 @@ func (r *Route) getRegexpGroup() *routeRegexpGroup {
 	}
 	return r.regexp
 }
+
+func (r *Route) GetMethods() []string {
+	results := map[string]struct{}{}
+	for _, matcher := range r.matchers {
+		if _, ok := matcher.(methodMatcher); !ok {
+			continue
+		}
+		for _, method := range []string(matcher.(methodMatcher)) {
+			results[method] = struct{}{}
+		}
+	}
+	methods := []string{}
+	for method, _ := range results {
+		methods = append(methods, method)
+	}
+	return methods
+}
+
+func (r *Route) matchWithoutMethod(req *http.Request) bool {
+	if r.buildOnly || r.err != nil {
+		return false
+	}
+	for _, m := range r.matchers {
+		if _, ok := m.(methodMatcher); ok {
+			continue
+		}
+		match := &RouteMatch{}
+		if matched := m.Match(req, match); !matched {
+			return false
+		}
+	}
+	return true
+}
